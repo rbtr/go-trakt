@@ -22,27 +22,27 @@ type Sync interface {
 }
 
 type CollectionBody struct {
-	Movies   []Movie   `json:"movies"`
-	Shows    []Show    `json:"shows"`
-	Seasons  []Season  `json:"season"`
-	Episodes []Episode `json:"episode"`
+	Movies   []Movie   `json:"movies,omitempty"`
+	Shows    []Show    `json:"shows,omitempty"`
+	Seasons  []Season  `json:"season,omitempty"`
+	Episodes []Episode `json:"episodes,omitempty"`
 }
 
 type Collection struct {
-	Movies   int `json:"movies"`
-	Episodes int `json:"episodes"`
+	Movies   int `json:"movies,omitempty"`
+	Episodes int `json:"episodes,omitempty"`
 }
 
 type CollectionResult struct {
-	Added    Collection `json:"added"`
-	Updated  Collection `json:"updated"`
-	Existing Collection `json:"existing"`
+	Added    Collection `json:"added,omitempty"`
+	Updated  Collection `json:"updated,omitempty"`
+	Existing Collection `json:"existing,omitempty"`
 	NotFound struct {
-		Movies   []Movie   `json:"movies"`
-		Shows    []Show    `json:"shows"`
-		Seasons  []Season  `json:"seasons"`
-		Episodes []Episode `json:"episode"`
-	} `json:"not_found"`
+		Movies   []Movie   `json:"movies,omitempty"`
+		Shows    []Show    `json:"shows,omitempty"`
+		Seasons  []Season  `json:"seasons,omitempty"`
+		Episodes []Episode `json:"episode,omitempty"`
+	} `json:"not_found,omitempty"`
 }
 
 func (c *Client) Collection(ctx context.Context, collectionBody *CollectionBody) (*CollectionResult, error) {
@@ -50,8 +50,9 @@ func (c *Client) Collection(ctx context.Context, collectionBody *CollectionBody)
 	if err != nil {
 		return nil, err
 	}
-	uri := path.Join(c.BaseURL.String(), syncBasePath, collectionPath)
-	req, err := http.NewRequest(http.MethodPost, uri, bytes.NewReader(postBody))
+	uri := *c.BaseURL
+	uri.Path = path.Join(uri.Path, syncBasePath, collectionPath)
+	req, err := http.NewRequest(http.MethodPost, uri.String(), bytes.NewReader(postBody))
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +63,7 @@ func (c *Client) Collection(ctx context.Context, collectionBody *CollectionBody)
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != 201 {
 		return nil, errors.Errorf("error updating collection: %d", resp.StatusCode)
 	}
 	result := &CollectionResult{}

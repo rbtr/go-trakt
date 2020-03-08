@@ -39,8 +39,9 @@ func (c *Client) DeviceCode(ctx context.Context) (*DeviceCodeResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	uri := path.Join(c.BaseURL.String(), deviceCodePath)
-	req, err := http.NewRequest(http.MethodPost, uri, bytes.NewReader(postBody))
+	uri := *c.BaseURL
+	uri.Path = path.Join(uri.Path, deviceCodePath)
+	req, err := http.NewRequest(http.MethodPost, uri.String(), bytes.NewReader(postBody))
 	if err != nil {
 		return nil, err
 	}
@@ -86,8 +87,9 @@ func (c *Client) Token(ctx context.Context, code string) (*AuthResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	uri := path.Join(c.BaseURL.String(), deviceTokenPath)
-	req, err := http.NewRequest(http.MethodPost, uri, bytes.NewReader(postBody))
+	uri := *c.BaseURL
+	uri.Path = path.Join(uri.Path, deviceTokenPath)
+	req, err := http.NewRequest(http.MethodPost, uri.String(), bytes.NewReader(postBody))
 	if err != nil {
 		return nil, err
 	}

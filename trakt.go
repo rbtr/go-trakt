@@ -21,15 +21,16 @@ type Client struct {
 	headers     http.Header
 }
 
-func NewClient(httpClient *http.Client, clientID string) (*Client, error) {
+func NewClient(httpClient *http.Client, clientID, clientSecret string) (*Client, error) {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
 	baseURL, _ := url.Parse(defaultBaseURL)
 	c := &Client{
-		BaseURL:  baseURL,
-		ClientID: clientID,
-		client:   httpClient,
+		BaseURL:      baseURL,
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		client:       httpClient,
 	}
 	return c, nil
 }
@@ -43,6 +44,6 @@ func (c *Client) SetHeaders(req *http.Request) {
 	req.Header.Set("trakt-api-key", c.ClientID)
 	req.Header.Set("trakt-api-version", "2")
 	if c.accessToken != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer: %s", c.accessToken))
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.accessToken))
 	}
 }
