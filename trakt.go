@@ -18,7 +18,6 @@ type Client struct {
 
 	accessToken string
 	client      *http.Client
-	headers     http.Header
 }
 
 func NewClient(httpClient *http.Client, clientID, clientSecret string) (*Client, error) {

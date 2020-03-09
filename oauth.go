@@ -11,8 +11,10 @@ import (
 )
 
 const (
-	oauthTokenPath  = "oauth/token"
-	deviceCodePath  = "/oauth/device/code"
+	// nolint: gosec
+	oauthTokenPath = "/oauth/token"
+	deviceCodePath = "/oauth/device/code"
+	// nolint: gosec
 	deviceTokenPath = "/oauth/device/token"
 )
 
@@ -117,7 +119,8 @@ type RefreshBody struct {
 	ClientID     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
 	RefreshToken string `json:"refresh_token"`
-	redirectURI  string `json:"redirect_uri"`
+	RedirectURI  string `json:"redirect_uri"`
+	GrantType    string `json:"grant_type"`
 }
 
 func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*AuthResult, error) {
@@ -125,7 +128,8 @@ func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*AuthRe
 		ClientID:     c.ClientID,
 		ClientSecret: c.ClientSecret,
 		RefreshToken: refreshToken,
-		redirectURI:  "urn:ietf:wg:oauth:2.0:oob",
+		RedirectURI:  "urn:ietf:wg:oauth:2.0:oob",
+		GrantType:    "refresh_token",
 	})
 	if err != nil {
 		return nil, err
@@ -144,7 +148,7 @@ func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*AuthRe
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return nil, errors.Errorf("error getting device code: %d", resp.StatusCode)
+		return nil, errors.Errorf("error refreshing token: %d", resp.StatusCode)
 	}
 	result := &AuthResult{}
 	err = json.NewDecoder(resp.Body).Decode(result)

@@ -24,7 +24,7 @@ type Sync interface {
 type CollectionBody struct {
 	Movies   []Movie   `json:"movies,omitempty"`
 	Shows    []Show    `json:"shows,omitempty"`
-	Seasons  []Season  `json:"season,omitempty"`
+	Seasons  []Season  `json:"seasons,omitempty"`
 	Episodes []Episode `json:"episodes,omitempty"`
 }
 
