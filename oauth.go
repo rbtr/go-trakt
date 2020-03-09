@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	oauthTokenPath  = "oauth/token"
 	deviceCodePath  = "/oauth/device/code"
 	deviceTokenPath = "/oauth/device/token"
 )
@@ -19,7 +20,8 @@ var _ Authentication = (*Client)(nil)
 
 type Authentication interface {
 	DeviceCode(context.Context) (*DeviceCodeResult, error)
-	Token(context.Context, string) (*AuthResult, error)
+	DeviceToken(context.Context, string) (*AuthResult, error)
+	RefreshToken(context.Context, string) (*AuthResult, error)
 }
 
 type DeviceCodeBody struct {
@@ -78,7 +80,7 @@ type AuthResult struct {
 	CreatedAt    int    `json:"created_at"`
 }
 
-func (c *Client) Token(ctx context.Context, code string) (*AuthResult, error) {
+func (c *Client) DeviceToken(ctx context.Context, code string) (*AuthResult, error) {
 	postBody, err := json.Marshal(AuthBody{
 		Code:         code,
 		ClientID:     c.ClientID,
@@ -89,6 +91,47 @@ func (c *Client) Token(ctx context.Context, code string) (*AuthResult, error) {
 	}
 	uri := *c.BaseURL
 	uri.Path = path.Join(uri.Path, deviceTokenPath)
+	req, err := http.NewRequest(http.MethodPost, uri.String(), bytes.NewReader(postBody))
+	if err != nil {
+		return nil, err
+	}
+	c.SetHeaders(req)
+	req = req.WithContext(ctx)
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return nil, errors.Errorf("error getting device code: %d", resp.StatusCode)
+	}
+	result := &AuthResult{}
+	err = json.NewDecoder(resp.Body).Decode(result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+type RefreshBody struct {
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+	RefreshToken string `json:"refresh_token"`
+	redirectURI  string `json:"redirect_uri"`
+}
+
+func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*AuthResult, error) {
+	postBody, err := json.Marshal(RefreshBody{
+		ClientID:     c.ClientID,
+		ClientSecret: c.ClientSecret,
+		RefreshToken: refreshToken,
+		redirectURI:  "urn:ietf:wg:oauth:2.0:oob",
+	})
+	if err != nil {
+		return nil, err
+	}
+	uri := *c.BaseURL
+	uri.Path = path.Join(uri.Path, oauthTokenPath)
 	req, err := http.NewRequest(http.MethodPost, uri.String(), bytes.NewReader(postBody))
 	if err != nil {
 		return nil, err
